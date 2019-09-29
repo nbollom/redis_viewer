@@ -19,6 +19,7 @@ private:
     int main_window_width;
     int main_window_height;
     bool group_keys;
+    char group_char;
 
 public:
     void Load();

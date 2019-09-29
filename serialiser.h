@@ -10,22 +10,48 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <iostream>
+
+typedef enum {
+    BooleanType,
+    IntegerType,
+    LongType,
+    FloatType,
+    DoubleType,
+    CharacterType,
+    StringType,
+} ValueType;
 
 struct SerialiserValue {
-    std::string value_type;
+    ValueType value_type;
     std::function<void*()> GetValue;
     std::function<void(void*)> SetValue;
 };
 
 typedef std::map<std::string, std::map<std::string, SerialiserValue>> SerialiserMap;
 
-class Serialiser {
+class Serialisable {
+
+private:
+    std::string class_name;
+    SerialiserMap serialiser_map;
+
+    static void GetNameValue(const std::string &line, std::string &name, std::string &value);
+
+protected:
+    template <typename T>
+    void SerialisableProperty(const std::string &section, const std::string &name, ValueType type, T &reference) {
+        serialiser_map[section][name] = {
+                type,
+                [&]() { return &reference; },
+                [&](void *value) { reference = *((T*)value); }
+        };
+    }
 
 public:
-    Serialiser() = delete;
-
-    static bool Serialise(const SerialiserMap &map, const std::string &path);
-    static bool Deserialise(const SerialiserMap &map, const std::string &path);
+    explicit Serialisable(std::string name);
+    bool Serialise(const std::string &path);
+    bool Deserialise(const std::string &path);
 
 };
 

@@ -13,7 +13,7 @@
 #include <QToolBar>
 #include <QComboBox>
 #include <QLineEdit>
-#include <QTreeView>
+#include <QTreeWidget>
 #include <QTabWidget>
 #include <QLabel>
 #include <QMenu>
@@ -31,9 +31,10 @@ private:
     QWidget left_panel;
     QVBoxLayout left_panel_layout;
     QToolBar list_toolbar;
+    bool group_keys;
     QComboBox instance_select;
     QLineEdit filter_list;
-    QTreeView redis_keys_tree;
+    QTreeWidget redis_keys_tree;
     QTabWidget tabs;
 
     QLabel connection_status;
@@ -43,6 +44,7 @@ public:
     void ShowStatusMessage(const std::string &message);
     void UpdateRecentConnections();
     void QuickConnect();
+    void UpdateKeysList();
     void AddTab(const std::string &name, TabDocument *document);
 
     // List Actions
@@ -50,6 +52,7 @@ public:
     void DeleteKey();
     void ToggleGrouping();
     void FilterList();
+    void ReloadKeys();
 
 public slots:
     void Exit();

@@ -66,8 +66,11 @@ MainWindow::MainWindow() {
     list_toolbar.addAction(QIcon::fromTheme("list-remove"), "Remove", this, &MainWindow::DeleteKey);
     QAction *grouping = list_toolbar.addAction(QIcon::fromTheme("insert-link"), "Toggle Grouping", this, &MainWindow::ToggleGrouping);
     QAction *filter = list_toolbar.addAction(QIcon::fromTheme("edit-find"), "Filter", this, &MainWindow::FilterList);
+    list_toolbar.addSeparator();
+    list_toolbar.addAction(QIcon::fromTheme("loading"), "Reload", this, &MainWindow::ReloadKeys);
     grouping->setCheckable(true);
-    grouping->setChecked(settings.GroupKeys());
+    group_keys = settings.GroupKeys();
+    grouping->setChecked(group_keys);
     filter->setCheckable(true);
 
     // Tabs Panel
@@ -95,25 +98,59 @@ void MainWindow::QuickConnect() {
     // TODO: Show quick connect dialog
 }
 
+void MainWindow::UpdateKeysList() {
+    if (group_keys) {
+        // TODO: Apply grouping logic
+    }
+    else {
+        // TODO: Standard list of keys
+    }
+}
+
 void MainWindow::AddTab(const std::string &name, TabDocument *document) {
     tabs.addTab(document, QString::fromStdString(name));
     connect(document, &TabDocument::CloseTab, this, &MainWindow::CloseTab);
 }
 
 void MainWindow::AddKey() {
-
+    // TODO: Show AddKey dialog
 }
 
 void MainWindow::DeleteKey() {
-
+    QList<QTreeWidgetItem *> selected = redis_keys_tree.selectedItems();
+    std::list<std::string> keys_to_delete;
+    for (const auto &item: selected) {
+        if (item->childCount()) {
+            // TODO: Find end children and add to list
+        }
+        else {
+            // TODO: Get full key name (probably have to use parents)
+        }
+    }
+    // TODO: Confirm deleting key(s)
+    // TODO: Start a pipeline to delete all at once
+    for (const auto &key: keys_to_delete) {
+        // TODO: Send Redis DEL command and remove item from list
+    }
+    // TODO: Execute pipeline
 }
 
 void MainWindow::ToggleGrouping() {
-
+    group_keys = !group_keys;
+    UpdateKeysList();
 }
 
 void MainWindow::FilterList() {
-    filter_list.setVisible(!filter_list.isVisible());
+    bool filter = filter_list.isVisible();
+    filter_list.setVisible(!filter);
+    if (!filter) {
+        filter_list.setText(""); // clear filter for next time
+        // TODO: Remove any current filter
+    }
+}
+
+void MainWindow::ReloadKeys() {
+    // TODO: Reload Keys
 }
 
 void MainWindow::Exit() {
@@ -121,7 +158,7 @@ void MainWindow::Exit() {
 }
 
 void MainWindow::ShowConnectionManager() {
-    ShowStatusMessage("Connecting...");
+    // TODO: Show Connection Manager
 }
 
 void MainWindow::CloseTab(TabDocument *document) {
