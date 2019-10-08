@@ -1,41 +1,28 @@
 //
-// redis_connection.h
+// simple_redis_connection.h
 // Created by TheFatNinja 
-// 24-09-2019
+// 08-10-2019
 //
 
-#ifndef REDIS_VIEWER_REDIS_CONNECTION_H
-#define REDIS_VIEWER_REDIS_CONNECTION_H
+#ifndef REDIS_VIEWER_SIMPLE_REDIS_CONNECTION_H
+#define REDIS_VIEWER_SIMPLE_REDIS_CONNECTION_H
 
-#include <QObject>
-#include <functional>
+#include <hiredis/hiredis.h>
+#include <hiredis/async.h>
 #include <memory>
-#include <vector>
-#include <map>
+#include "redis_connection.h"
 
-typedef enum {
-    StandardRedisConnection = 0,
-    SentinelRedisConnection = 1
-} RedisConnectionType;
+class SimpleRedisConnection : public RedisConnection {
 
-typedef enum {
-    KeyTypeString,
-    KeyTypeList,
-    KeyTypeSet,
-    KeyTypeZSet,
-    KeyTypeHash,
-    KeyTypeStream,
-    KeyTypeAny
-} KeyType;
-
-class RedisConnection : public QObject {
-    Q_OBJECT
-
-protected:
-    RedisConnection() = default;
+private:
+    std::string host;
+    int port;
+    std::unique_ptr<redisAsyncContext> context;
 
 public:
-    virtual void Connect() = 0;
+    explicit SimpleRedisConnection(const std::string &host, const int &port);
+
+    void Connect() override;
     virtual void Disconnect() = 0;
     virtual bool IsConnected() = 0;
 
@@ -86,6 +73,4 @@ public:
     virtual int HDEL(const std::string &key, const std::vector<const std::string&> &fields) = 0;
 };
 
-typedef std::shared_ptr<RedisConnection> ConnectionPtr;
-
-#endif //REDIS_VIEWER_REDIS_CONNECTION_H
+#endif //REDIS_VIEWER_SIMPLE_REDIS_CONNECTION_H

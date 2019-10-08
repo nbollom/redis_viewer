@@ -9,8 +9,9 @@
 
 #include <QObject>
 #include <QDir>
+#include "serialiser.h"
 
-class Settings : public QObject {
+class Settings : public QObject, Serialisable {
     Q_OBJECT
 
 private:
@@ -22,8 +23,8 @@ private:
     char group_char;
 
 public:
+    Settings();
     void Load();
-    void LoadDefaults();
     void Save();
     static QDir GetSettingsDir();
 

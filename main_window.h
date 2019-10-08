@@ -39,6 +39,9 @@ private:
 
     QLabel connection_status;
 
+protected:
+    void closeEvent(QCloseEvent *event);
+
 public:
     MainWindow();
     void ShowStatusMessage(const std::string &message);

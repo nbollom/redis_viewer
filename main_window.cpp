@@ -7,6 +7,7 @@
 #include "main_window.h"
 #include <QMenuBar>
 #include <QStatusBar>
+#include <QCloseEvent>
 #include "welcome_tab.h"
 
 MainWindow::MainWindow() {
@@ -25,7 +26,7 @@ MainWindow::MainWindow() {
     status->addPermanentWidget(&connection_status);
     connection_status.setText("Disconnected");
     move(settings.MainWindowX(), settings.MainWindowY());
-    setFixedSize(settings.MainWindowWidth(), settings.MainWindowHeight());
+    resize(settings.MainWindowWidth(), settings.MainWindowHeight());
 
     // Menus
     QMenu *file_menu = menuBar()->addMenu("File");
@@ -60,14 +61,15 @@ MainWindow::MainWindow() {
     left_panel_layout.setMargin(0);
     instance_select.hide(); // Hide until we know there is a need for
     filter_list.hide(); // Toolbar button shows it
+    redis_keys_tree.setHeaderHidden(true);
 
     // List Toolbar
     list_toolbar.addAction(QIcon::fromTheme("list-add"), "Add", this, &MainWindow::AddKey);
     list_toolbar.addAction(QIcon::fromTheme("list-remove"), "Remove", this, &MainWindow::DeleteKey);
-    QAction *grouping = list_toolbar.addAction(QIcon::fromTheme("insert-link"), "Toggle Grouping", this, &MainWindow::ToggleGrouping);
+    QAction *grouping = list_toolbar.addAction(QIcon::fromTheme("folder"), "Toggle Grouping", this, &MainWindow::ToggleGrouping);
     QAction *filter = list_toolbar.addAction(QIcon::fromTheme("edit-find"), "Filter", this, &MainWindow::FilterList);
     list_toolbar.addSeparator();
-    list_toolbar.addAction(QIcon::fromTheme("loading"), "Reload", this, &MainWindow::ReloadKeys);
+    QAction *refresh = list_toolbar.addAction(QIcon::fromTheme("view-refresh"), "Reload", this, &MainWindow::ReloadKeys);
     grouping->setCheckable(true);
     group_keys = settings.GroupKeys();
     grouping->setChecked(group_keys);
@@ -78,6 +80,22 @@ MainWindow::MainWindow() {
      connect(&tabs, &QTabWidget::tabCloseRequested, this, &MainWindow::ClosingTab);
      auto *welcome_tab = new WelcomeTab();
      AddTab("Welcome", welcome_tab);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    for (auto i = tabs.count() - 1; i >= 0; --i) {
+        ClosingTab(i);
+    }
+    if (tabs.count()) {
+        event->ignore();
+    }
+    else {
+        settings.SetMainWindowX(x());
+        settings.SetMainWindowY(y());
+        settings.SetMainWindowWidth(width());
+        settings.SetMainWindowHeight(height());
+        settings.Save();
+    }
 }
 
 void MainWindow::ShowStatusMessage(const std::string &message) {

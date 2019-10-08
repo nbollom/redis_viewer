@@ -5,38 +5,39 @@
 //
 
 #include "settings.h"
+#include <QStandardPaths>
 
-#define REDIS_VIEWER_DIRECTORY ".redisviewer"
 #define REDIS_VIEWER_CONF_FILE "redisviewer.conf"
+
+Settings::Settings() : Serialisable("Settings") {
+    SerialisableProperty("Window", "MainWindowX", IntegerType, main_window_x, 50);
+    SerialisableProperty("Window", "MainWindowY", IntegerType, main_window_y, 50);
+    SerialisableProperty("Window", "MainWindowWidth", IntegerType, main_window_width, 800);
+    SerialisableProperty("Window", "MainWindowHeight", IntegerType, main_window_height, 600);
+    SerialisableProperty("Grouping", "GroupKeys", BooleanType, group_keys, true);
+    SerialisableProperty("Grouping", "GroupCharacter", CharacterType, group_char, ':');
+}
 
 void Settings::Load() {
     QDir dir = GetSettingsDir();
     if (dir.exists(REDIS_VIEWER_CONF_FILE)) {
-
+        std::string path = dir.absoluteFilePath(REDIS_VIEWER_CONF_FILE).toStdString();
+        Deserialise(path);
     }
-    else {
-        LoadDefaults();
-    }
-}
-
-void Settings::LoadDefaults() {
-    main_window_x = 50;
-    main_window_y = 50;
-    main_window_width = 800;
-    main_window_height = 600;
-    group_keys = true;
 }
 
 void Settings::Save() {
-
+    QDir dir = GetSettingsDir();
+    std::string path = dir.absoluteFilePath(REDIS_VIEWER_CONF_FILE).toStdString();
+    Serialise(path);
 }
 
 QDir Settings::GetSettingsDir() {
-    QDir dir = QDir::home();
-    if (!dir.exists(REDIS_VIEWER_DIRECTORY)) {
-        dir.mkdir(REDIS_VIEWER_DIRECTORY);
+    auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir dir(path);
+    if (!dir.exists(dir.absolutePath())) {
+        dir.mkdir(dir.absolutePath());
     }
-    dir.cd(REDIS_VIEWER_DIRECTORY);
     return dir;
 }
 

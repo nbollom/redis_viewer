@@ -40,7 +40,9 @@ private:
 
 protected:
     template <typename T>
-    void SerialisableProperty(const std::string &section, const std::string &name, ValueType type, T &reference) {
+    void SerialisableProperty(const std::string &section, const std::string &name, ValueType type, T &reference, T default_value) {
+        // Set value to default and let the read overwrite later
+        reference = default_value;
         serialiser_map[section][name] = {
                 type,
                 [&]() { return &reference; },
