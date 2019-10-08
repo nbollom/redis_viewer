@@ -30,20 +30,19 @@ MainWindow::MainWindow() {
 
     // Menus
     QMenu *file_menu = menuBar()->addMenu("File");
-    file_menu->addAction(QIcon::fromTheme("document-properties"), "Connection Manager", this, &MainWindow::ShowConnectionManager);
+    file_menu->addAction(QIcon(":/images/connections.svg"), "Connection Manager", this, &MainWindow::ShowConnectionManager);
     file_menu->addMenu(&recent_connections);
     recent_connections.setTitle("Recent Connections");
-    recent_connections.setIcon(QIcon::fromTheme("document-open-recent"));
+    recent_connections.setIcon(QIcon(":/images/recent2.svg"));
     UpdateRecentConnections();
-    UpdateRecentConnections();
-    file_menu->addAction(QIcon::fromTheme("document-new"), "Quick Connect", this, &MainWindow::QuickConnect);
-    file_menu->addAction(QIcon::fromTheme("application-exit"), "Exit", this, &MainWindow::Exit);
+    file_menu->addAction(QIcon(":/images/quick_connect.svg"), "Quick Connect", this, &MainWindow::QuickConnect);
+    file_menu->addAction(QIcon(":/images/exit.svg"), "Exit", this, &MainWindow::Exit);
 
     // Toolbars
     toolbar.setMovable(false);
     toolbar.setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonTextUnderIcon);
-    toolbar.addAction(QIcon::fromTheme("document-properties"), "Connect", this, &MainWindow::ShowConnectionManager);
-    toolbar.addAction(QIcon::fromTheme("document-new"), "Quick Connect", this, &MainWindow::QuickConnect);
+    toolbar.addAction(QIcon(":/images/connections.svg"), "Connect", this, &MainWindow::ShowConnectionManager);
+    toolbar.addAction(QIcon(":/images/quick_connect.svg"), "Quick Connect", this, &MainWindow::QuickConnect);
 
     // Main Layouts
     main_widget.addWidget(&left_panel);
@@ -64,12 +63,12 @@ MainWindow::MainWindow() {
     redis_keys_tree.setHeaderHidden(true);
 
     // List Toolbar
-    list_toolbar.addAction(QIcon::fromTheme("list-add"), "Add", this, &MainWindow::AddKey);
-    list_toolbar.addAction(QIcon::fromTheme("list-remove"), "Remove", this, &MainWindow::DeleteKey);
-    QAction *grouping = list_toolbar.addAction(QIcon::fromTheme("folder"), "Toggle Grouping", this, &MainWindow::ToggleGrouping);
-    QAction *filter = list_toolbar.addAction(QIcon::fromTheme("edit-find"), "Filter", this, &MainWindow::FilterList);
+    list_toolbar.addAction(QIcon(":/images/add.svg"), "Add", this, &MainWindow::AddKey);
+    list_toolbar.addAction(QIcon(":/images/remove.svg"), "Remove", this, &MainWindow::DeleteKey);
+    QAction *grouping = list_toolbar.addAction(QIcon(":/images/group.svg"), "Toggle Grouping", this, &MainWindow::ToggleGrouping);
+    QAction *filter = list_toolbar.addAction(QIcon(":/images/search.svg"), "Filter", this, &MainWindow::FilterList);
     list_toolbar.addSeparator();
-    QAction *refresh = list_toolbar.addAction(QIcon::fromTheme("view-refresh"), "Reload", this, &MainWindow::ReloadKeys);
+    QAction *refresh = list_toolbar.addAction(QIcon(":/images/refresh.svg"), "Reload", this, &MainWindow::ReloadKeys);
     grouping->setCheckable(true);
     group_keys = settings.GroupKeys();
     grouping->setChecked(group_keys);

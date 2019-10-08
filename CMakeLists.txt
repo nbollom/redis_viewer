@@ -18,5 +18,5 @@ find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 find_package(hiredis REQUIRED)
 
 include_directories(HIREDIS_INCLUDE_DIRS)
-add_executable(redis_viewer ${REDIS_VIEWER_SOURCES})
+add_executable(redis_viewer ${REDIS_VIEWER_SOURCES} images.qrc)
 target_link_libraries(redis_viewer Qt5::Core Qt5::Widgets ${HIREDIS_LIBRARIES})

@@ -1,0 +1,25 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>images/add.svg</file>
+    <file>images/build.svg</file>
+    <file>images/connections.svg</file>
+    <file>images/delete.svg</file>
+    <file>images/group.svg</file>
+    <file>images/navigate_next.svg</file>
+    <file>images/refresh.svg</file>
+    <file>images/save.svg</file>
+    <file>images/block.svg</file>
+    <file>images/clear.svg</file>
+    <file>images/create.svg</file>
+    <file>images/done.svg</file>
+    <file>images/navigate_before.svg</file>
+    <file>images/quick_connect.svg</file>
+    <file>images/remove.svg</file>
+    <file>images/search.svg</file>
+    <file>images/code.svg</file>
+    <file>images/exit.svg</file>
+    <file>images/recent2.svg</file>
+    <file>images/settings.svg</file>
+    <file>images/help.svg</file>
+</qresource>
+</RCC>
