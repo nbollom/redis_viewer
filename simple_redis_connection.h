@@ -29,7 +29,7 @@ public:
     virtual RedisConnectionType Type() = 0;
 
     virtual std::vector<std::string> KEYS(const std::string &search_string) = 0;
-    virtual void SCAN(const std::string &search_string, const KeyType &type, std::function<void(std::vector<std::string>)> callback) = 0;
+    virtual std::vector<std::string> SCAN(const std::string &search_string, const KeyType &type) = 0;
     virtual KeyType TYPE(const std::string &key) = 0;
 
     // String type methods
@@ -52,21 +52,21 @@ public:
 
     // Set type methods
     virtual std::vector<std::string> SMEMBERS(const std::string &key) = 0;
-    virtual void SSCAN(const std::string &key, const std::string &search_string, std::function<void(std::vector<std::string>)> callback) = 0;
+    virtual std::vector<std::string> SSCAN(const std::string &key, const std::string &search_string) = 0;
     virtual int SADD(const std::string &key, const std::string &value) = 0;
     virtual int SREM(const std::string &key, const std::string &value) = 0;
     virtual int SREM(const std::string &key, const std::vector<const std::string&> &values) = 0;
 
     // Set type methods
     virtual std::vector<std::string> ZRANGE(const std::string &key, const int &start, const int &end) = 0;
-    virtual void ZSCAN(const std::string &key, const std::string &search_string, std::function<void(std::map<std::string, double>)> callback) = 0;
+    virtual std::map<std::string, double> ZSCAN(const std::string &key, const std::string &search_string) = 0;
     virtual int ZADD(const std::string &key, const double &score, const std::string &value) = 0;
     virtual int ZREM(const std::string &key, const std::string &value) = 0;
     virtual int ZREM(const std::string &key, const std::vector<const std::string&> &values) = 0;
 
     // Hash type methods
     virtual std::vector<std::string> HKEYS(const std::string &key) = 0;
-    virtual void HSCAN(const std::string &key, const std::string &search_string, std::function<void(std::map<std::string, std::string>)> callback) = 0;
+    virtual std::map<std::string, std::string> HSCAN(const std::string &key, const std::string &search_string) = 0;
     virtual std::string HGET(const std::string &key, const std::string &field) = 0;
     virtual bool HSET(const std::string &key, const std::string &field, const std::string &value) = 0;
     virtual int HDEL(const std::string &key, const std::string &field) = 0;

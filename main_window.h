@@ -19,6 +19,7 @@
 #include <QMenu>
 #include "tab_document.h"
 #include "settings.h"
+#include "redis_connection.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -38,6 +39,7 @@ private:
     QTabWidget tabs;
 
     QLabel connection_status;
+    RedisConnection *redis = nullptr;
 
 protected:
     void closeEvent(QCloseEvent *event);

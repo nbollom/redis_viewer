@@ -9,6 +9,7 @@
 #include <QStatusBar>
 #include <QCloseEvent>
 #include "welcome_tab.h"
+#include "task_queue.h"
 
 MainWindow::MainWindow() {
     // Load Settings
@@ -116,6 +117,9 @@ void MainWindow::QuickConnect() {
 }
 
 void MainWindow::UpdateKeysList() {
+    if (redis && redis->IsConnected()) {
+        
+    }
     if (group_keys) {
         // TODO: Apply grouping logic
     }
