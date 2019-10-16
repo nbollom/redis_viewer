@@ -14,7 +14,7 @@ class Controller : public QObject {
     Q_OBJECT
 
 private:
-    ConnectionPtr connection;
+    RedisConnectionPtr connection;
 
 public:
     Controller();

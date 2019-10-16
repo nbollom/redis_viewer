@@ -23,54 +23,54 @@ public:
     explicit SimpleRedisConnection(const std::string &host, const int &port);
 
     void Connect() override;
-    virtual void Disconnect() = 0;
-    virtual bool IsConnected() = 0;
+    void Disconnect() override;
+    bool IsConnected() override;
 
-    virtual RedisConnectionType Type() = 0;
+    RedisConnectionType Type() override;
 
-    virtual std::vector<std::string> KEYS(const std::string &search_string) = 0;
-    virtual std::vector<std::string> SCAN(const std::string &search_string, const KeyType &type) = 0;
-    virtual KeyType TYPE(const std::string &key) = 0;
+    std::vector<std::string> KEYS(const std::string &search_string) override;
+    std::vector<std::string> SCAN(const std::string &search_string, const KeyType &type) override;
+    KeyType TYPE(const std::string &key) override;
 
     // String type methods
-    virtual std::string GET(const std::string &key) = 0;
-    virtual bool SET(const std::string &key, const std::string &value) = 0;
-    virtual int DEL(const std::string &key) = 0;
-    virtual int DEL(const std::vector<const std::string&> &keys) = 0;
+    std::string GET(const std::string &key) override;
+    bool SET(const std::string &key, const std::string &value) override;
+    int DEL(const std::string &key) override;
+    int DEL(const std::vector<std::string> &keys) override;
 
     // List type methods
-    virtual std::vector<std::string> LRANGE(const std::string &key, const int &first, const int &last) = 0;
-    virtual int LPUSH(const std::string &key, const std::string &value) = 0;
-    virtual int LPUSHX(const std::string &key, const std::string &value) = 0;
-    virtual int LSET(const std::string &key, const int &index, const std::string &value) = 0;
-    virtual int LINSERT(const std::string &key, bool before, const std::string &reference_value, const std::string &value) = 0;
-    virtual int RPUSH(const std::string &key, const std::string &value) = 0;
-    virtual int RPUSHX(const std::string &key, const std::string &value) = 0;
-    virtual int LREM(const std::string &key, const std::string &value) = 0;
-    virtual std::string LPOP(const std::string &key) = 0;
-    virtual std::string RPOP(const std::string &key) = 0;
+    std::vector<std::string> LRANGE(const std::string &key, const int &first, const int &last) override;
+    int LPUSH(const std::string &key, const std::string &value) override;
+    int LPUSHX(const std::string &key, const std::string &value) override;
+    int LSET(const std::string &key, const int &index, const std::string &value) override;
+    int LINSERT(const std::string &key, bool before, const std::string &reference_value, const std::string &value) override;
+    int RPUSH(const std::string &key, const std::string &value) override;
+    int RPUSHX(const std::string &key, const std::string &value) override;
+    int LREM(const std::string &key, const std::string &value) override;
+    std::string LPOP(const std::string &key) override;
+    std::string RPOP(const std::string &key) override;
 
     // Set type methods
-    virtual std::vector<std::string> SMEMBERS(const std::string &key) = 0;
-    virtual std::vector<std::string> SSCAN(const std::string &key, const std::string &search_string) = 0;
-    virtual int SADD(const std::string &key, const std::string &value) = 0;
-    virtual int SREM(const std::string &key, const std::string &value) = 0;
-    virtual int SREM(const std::string &key, const std::vector<const std::string&> &values) = 0;
+    std::vector<std::string> SMEMBERS(const std::string &key) override;
+    std::vector<std::string> SSCAN(const std::string &key, const std::string &search_string) override;
+    int SADD(const std::string &key, const std::string &value) override;
+    int SREM(const std::string &key, const std::string &value) override;
+    int SREM(const std::string &key, const std::vector<std::string> &values) override;
 
     // Set type methods
-    virtual std::vector<std::string> ZRANGE(const std::string &key, const int &start, const int &end) = 0;
-    virtual std::map<std::string, double> ZSCAN(const std::string &key, const std::string &search_string) = 0;
-    virtual int ZADD(const std::string &key, const double &score, const std::string &value) = 0;
-    virtual int ZREM(const std::string &key, const std::string &value) = 0;
-    virtual int ZREM(const std::string &key, const std::vector<const std::string&> &values) = 0;
+    std::vector<std::string> ZRANGE(const std::string &key, const int &start, const int &end) override;
+    std::map<std::string, double> ZSCAN(const std::string &key, const std::string &search_string) override;
+    int ZADD(const std::string &key, const double &score, const std::string &value) override;
+    int ZREM(const std::string &key, const std::string &value) override;
+    int ZREM(const std::string &key, const std::vector<std::string> &values) override;
 
     // Hash type methods
-    virtual std::vector<std::string> HKEYS(const std::string &key) = 0;
-    virtual std::map<std::string, std::string> HSCAN(const std::string &key, const std::string &search_string) = 0;
-    virtual std::string HGET(const std::string &key, const std::string &field) = 0;
-    virtual bool HSET(const std::string &key, const std::string &field, const std::string &value) = 0;
-    virtual int HDEL(const std::string &key, const std::string &field) = 0;
-    virtual int HDEL(const std::string &key, const std::vector<const std::string&> &fields) = 0;
+    std::vector<std::string> HKEYS(const std::string &key) override;
+    std::map<std::string, std::string> HSCAN(const std::string &key, const std::string &search_string) override;
+    std::string HGET(const std::string &key, const std::string &field) override;
+    bool HSET(const std::string &key, const std::string &field, const std::string &value) override;
+    int HDEL(const std::string &key, const std::string &field) override;
+    int HDEL(const std::string &key, const std::vector<std::string> &fields) override;
 };
 
 #endif //REDIS_VIEWER_SIMPLE_REDIS_CONNECTION_H

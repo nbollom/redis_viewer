@@ -39,7 +39,7 @@ private:
     QTabWidget tabs;
 
     QLabel connection_status;
-    RedisConnection *redis = nullptr;
+    RedisConnectionPtr redis = nullptr;
 
 protected:
     void closeEvent(QCloseEvent *event);

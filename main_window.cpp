@@ -10,6 +10,7 @@
 #include <QCloseEvent>
 #include "welcome_tab.h"
 #include "task_queue.h"
+#include "quick_connect_dialog.h"
 
 MainWindow::MainWindow() {
     // Load Settings
@@ -18,6 +19,7 @@ MainWindow::MainWindow() {
     // Window Properties
     setWindowTitle("Redis Viewer");
     setMinimumSize(400, 400);
+    setWindowIcon(QIcon(":/images/quick_connect.svg"));
     addToolBar(Qt::ToolBarArea::TopToolBarArea, &toolbar);
     setCentralWidget(&main_widget);
     // Make sure status bar is already in the layout otherwise it pops in with a message
@@ -113,7 +115,11 @@ void MainWindow::UpdateRecentConnections() {
 }
 
 void MainWindow::QuickConnect() {
-    // TODO: Show quick connect dialog
+    QuickConnectDialog dialog;
+    if (dialog.exec() == QDialog::Accepted) {
+        redis = dialog.GetRedisConnection();
+        // TODO: get and connect to redis
+    }
 }
 
 void MainWindow::UpdateKeysList() {
