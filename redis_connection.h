@@ -13,8 +13,8 @@
 #include <map>
 
 typedef enum {
-    StandardRedisConnection = 0,
-    SentinelRedisConnection = 1
+    RedisStandardConnection = 0,
+    RedisSentinelConnection = 1
 } RedisConnectionType;
 
 typedef enum {
@@ -26,6 +26,8 @@ typedef enum {
     KeyTypeStream,
     KeyTypeAny
 } KeyType;
+
+extern std::map<KeyType, std::string> KeyTypeName;
 
 class RedisConnection {
 

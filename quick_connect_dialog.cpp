@@ -6,7 +6,7 @@
 
 #include <QMessageBox>
 #include "quick_connect_dialog.h"
-#include "simple_redis_connection.h"
+#include "standard_redis_connection.h"
 
 QuickConnectDialog::QuickConnectDialog() {
     setWindowTitle("Quick Connect");
@@ -62,7 +62,7 @@ void QuickConnectDialog::OKClicked() {
             return;
         }
     }
-    connection = std::make_shared<SimpleRedisConnection>(host.toStdString(), port);
+    connection = std::make_shared<StandardRedisConnection>(host.toStdString(), port);
     accept();
 }
 

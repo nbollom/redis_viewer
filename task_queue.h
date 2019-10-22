@@ -9,12 +9,13 @@
 
 #include <uv.h>
 #include <functional>
+#include <memory>
 
 template <typename T>
 struct Task{
     T data;
     std::function<T(void)> task_method = nullptr;
-    std::function<void(T)> callback = nullptr;
+    std::function<void(T&)> callback = nullptr;
 };
 
 class TaskQueue {
@@ -27,7 +28,7 @@ public:
     ~TaskQueue();
 
     template <typename T>
-    void RunTask(const std::function<T(void)> &task_method, const std::function<void(T)> &callback) {
+    void RunTask(const std::function<T(void)> &task_method, const std::function<void(T&)> &callback) {
         auto *task = new Task<T>();
         task->task_method = task_method;
         task->callback = callback;
@@ -49,5 +50,7 @@ public:
     void ProcessCallbacks();
 
 };
+
+typedef std::shared_ptr<TaskQueue> TaskQueuePtr;
 
 #endif //REDIS_VIEWER_TASK_QUEUE_H

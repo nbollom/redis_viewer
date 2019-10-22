@@ -17,9 +17,11 @@
 #include <QTabWidget>
 #include <QLabel>
 #include <QMenu>
+#include <QTimer>
 #include "tab_document.h"
 #include "settings.h"
 #include "redis_connection.h"
+#include "task_queue.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -38,19 +40,28 @@ private:
     QTreeWidget redis_keys_tree;
     QTabWidget tabs;
 
+    QTimer task_queue_timer;
+
     QLabel connection_status;
+    TaskQueuePtr task_queue;
     RedisConnectionPtr redis = nullptr;
 
+    std::vector<std::string> keys_list;
+
 protected:
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
+    void UpdateKeysList();
+    void ShowStatusMessage(const std::string &message);
+    void UpdateRecentConnections();
+    void AddTab(const std::string &name, TabDocument *document);
+    void ChangeRedisConnection(RedisConnectionPtr &new_connection);
 
 public:
     MainWindow();
-    void ShowStatusMessage(const std::string &message);
-    void UpdateRecentConnections();
+
+public slots:
+    void ProcessTasks();
     void QuickConnect();
-    void UpdateKeysList();
-    void AddTab(const std::string &name, TabDocument *document);
 
     // List Actions
     void AddKey();
@@ -58,8 +69,8 @@ public:
     void ToggleGrouping();
     void FilterList();
     void ReloadKeys();
+    void SelectKey(QTreeWidgetItem *item, int column);
 
-public slots:
     void Exit();
     void ShowConnectionManager();
     void CloseTab(TabDocument *document);

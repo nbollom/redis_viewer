@@ -24,3 +24,7 @@ WelcomeTab::WelcomeTab() {
 bool WelcomeTab::CanClose() {
     return true;
 }
+
+bool WelcomeTab::IsRedisDoc() {
+    return false;
+}

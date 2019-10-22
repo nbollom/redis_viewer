@@ -34,6 +34,7 @@ public:
     int MainWindowWidth();
     int MainWindowHeight();
     bool GroupKeys();
+    char GroupChar();
 
     // Property Setters
     void SetMainWindowX(int value);
@@ -41,6 +42,7 @@ public:
     void SetMainWindowWidth(int value);
     void SetMainWindowHeight(int value);
     void SetGroupKeys(bool value);
+    void SetGroupChar(char character);
 
 signals:
     void SettingsChanged();

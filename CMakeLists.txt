@@ -8,7 +8,7 @@ set(REDIS_VIEWER_SOURCES
     main.cpp
     main_window.cpp main_window.h
     welcome_tab.cpp welcome_tab.h
-        controller.cpp controller.h redis_connection.h tab_document.h settings.cpp settings.h serialiser.cpp serialiser.h simple_redis_connection.cpp simple_redis_connection.h task_queue.cpp task_queue.h quick_connect_dialog.cpp quick_connect_dialog.h)
+        controller.cpp controller.h redis_connection.h tab_document.h settings.cpp settings.h serialiser.cpp serialiser.h standard_redis_connection.cpp standard_redis_connection.h task_queue.cpp task_queue.h quick_connect_dialog.cpp quick_connect_dialog.h redis_connection.cpp)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)

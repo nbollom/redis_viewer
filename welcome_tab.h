@@ -22,6 +22,7 @@ private:
 public:
     WelcomeTab();
     bool CanClose();
+    bool IsRedisDoc() override;
 
 };
 

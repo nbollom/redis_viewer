@@ -17,6 +17,7 @@ private:
 
 public:
     virtual bool CanClose() = 0;
+    virtual bool IsRedisDoc() = 0;
 
 signals:
     void CloseTab(TabDocument *doc);

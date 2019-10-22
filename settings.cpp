@@ -61,6 +61,10 @@ bool Settings::GroupKeys() {
     return group_keys;
 }
 
+char Settings::GroupChar() {
+    return group_char;
+}
+
 void Settings::SetMainWindowX(int value) {
     main_window_x = value;
 }
@@ -79,5 +83,10 @@ void Settings::SetMainWindowHeight(int value) {
 
 void Settings::SetGroupKeys(bool value) {
     group_keys = value;
+    emit SettingsChanged();
+}
+
+void Settings::SetGroupChar(char character) {
+    group_char = character;
     emit SettingsChanged();
 }

@@ -4,23 +4,22 @@
 // 08-10-2019
 //
 
-#ifndef REDIS_VIEWER_SIMPLE_REDIS_CONNECTION_H
-#define REDIS_VIEWER_SIMPLE_REDIS_CONNECTION_H
+#ifndef REDIS_VIEWER_STANDARD_REDIS_CONNECTION_H
+#define REDIS_VIEWER_STANDARD_REDIS_CONNECTION_H
 
 #include <hiredis/hiredis.h>
-#include <hiredis/async.h>
 #include <memory>
 #include "redis_connection.h"
 
-class SimpleRedisConnection : public RedisConnection {
+class StandardRedisConnection : public RedisConnection {
 
 private:
     std::string host;
     int port;
-    std::unique_ptr<redisAsyncContext> context;
+    redisContext* context = nullptr;
 
 public:
-    explicit SimpleRedisConnection(const std::string &host, const int &port);
+    explicit StandardRedisConnection(const std::string &host, const int &port);
 
     void Connect() override;
     void Disconnect() override;
@@ -73,4 +72,6 @@ public:
     int HDEL(const std::string &key, const std::vector<std::string> &fields) override;
 };
 
-#endif //REDIS_VIEWER_SIMPLE_REDIS_CONNECTION_H
+typedef std::shared_ptr<StandardRedisConnection> StandardRedisConnectionPtr;
+
+#endif //REDIS_VIEWER_STANDARD_REDIS_CONNECTION_H
