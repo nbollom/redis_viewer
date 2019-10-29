@@ -20,8 +20,9 @@ private:
     QLabel body;
 
 public:
+    std::string Name() override;
     WelcomeTab();
-    bool CanClose();
+    bool CanClose() override ;
     bool IsRedisDoc() override;
 
 };

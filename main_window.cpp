@@ -9,9 +9,12 @@
 #include <QStatusBar>
 #include <QCloseEvent>
 #include <QMessageBox>
+#include <algorithm>
 #include "welcome_tab.h"
 #include "task_queue.h"
 #include "quick_connect_dialog.h"
+#include "redis_exceptions.h"
+#include "string_tab_document.h"
 
 MainWindow::MainWindow() {
     // Load Settings
@@ -91,7 +94,7 @@ MainWindow::MainWindow() {
      tabs.setTabsClosable(true);
      connect(&tabs, &QTabWidget::tabCloseRequested, this, &MainWindow::ClosingTab);
      auto *welcome_tab = new WelcomeTab();
-     AddTab("Welcome", welcome_tab);
+     AddTab(welcome_tab);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -138,47 +141,50 @@ void MainWindow::QuickConnect() {
 
 void MainWindow::UpdateKeysList() {
     redis_keys_tree.clear();
+    QIcon key_icon = QIcon(":/images/done.svg");
     if (group_keys) {
-        struct leaf {
+        struct Leaf {
             std::string label;
-            std::vector<leaf> children;
+            std::vector<Leaf> children;
+            std::string full_key;
         };
-        leaf master = leaf();
+        Leaf master = Leaf();
         char group_char = settings.GroupChar();
         for (auto &key: keys_list) {
             // TODO: Apply grouping logic
-            int start = 0;
-            leaf *current = &master;
-            int end = key.find(group_char, start);
-            while (end != std::string::npos) {
-                std::string key_part = key.substr(start, end);
-                bool exists = false;
-                for (leaf &child: current->children) {
-                    if (child.label == key_part) {
-                        current = &child;
-                        exists = true;
-                        break;
-                    }
+            int start_pos = 0;
+            Leaf *current = &master;
+            int end_pos = key.find(group_char, start_pos);
+            while (end_pos != std::string::npos) {
+                std::string key_part = key.substr(start_pos, end_pos - start_pos);
+                if (!current->children.empty() && current->children.back().label == key_part) {
+                    current = &current->children.back();
                 }
-                if (!exists) {
-                    leaf child;
+                else {
+                    Leaf child;
                     child.label = key_part;
                     current->children.emplace_back(child);
                     current = &current->children.back();
                 }
-                start = end + 1;
-                end = key.find(group_char, start);
+                start_pos = end_pos + 1;
+                end_pos = key.find(group_char, start_pos);
             }
-            std::string key_part = key.substr(start);
-            leaf child;
+            std::string key_part = key.substr(start_pos);
+            Leaf child;
             child.label = key_part;
+            child.full_key = key;
             current->children.emplace_back(child);
         }
-        std::function<QList<QTreeWidgetItem*> (const leaf&)> build_child_items = [this, &build_child_items](const leaf &level) {
+        std::function<QList<QTreeWidgetItem*> (const Leaf&)> build_child_items = [this, key_icon, &build_child_items](const Leaf &level) {
             QList<QTreeWidgetItem*> children;
-            for (const leaf &child: level.children) {
+            for (const Leaf &child: level.children) {
                 QString key_string = QString::fromStdString(child.label);
                 auto *item = new QTreeWidgetItem({key_string});
+                if (!child.full_key.empty()) {
+                    QString full_key = QString::fromStdString(child.full_key);
+                    item->setToolTip(0, full_key);
+                    item->setIcon(0, key_icon);
+                }
                 QList<QTreeWidgetItem*> child_items = build_child_items(child);
                 if (child_items.count()) {
                     item->addChildren(child_items);
@@ -191,19 +197,42 @@ void MainWindow::UpdateKeysList() {
         if (top_level_items.count()) {
             redis_keys_tree.addTopLevelItems(top_level_items);
         }
-        redis_keys_tree.expandAll();
     }
     else {
         for (auto &key: keys_list) {
             QString key_string = QString::fromStdString(key);
             auto *item = new QTreeWidgetItem(&redis_keys_tree, {key_string});
+            item->setToolTip(0, key_string);
+            item->setIcon(0, key_icon);
             redis_keys_tree.addTopLevelItem(item);
+        }
+    }
+    ShowStatusMessage("Done");
+}
+
+bool MainWindow::HasOpenTab(const std::string &key, bool is_redis) {
+    for (auto i = 0; i < tabs.count(); ++i) {
+        auto *tab = dynamic_cast<TabDocument*>(tabs.widget(i));
+        if (tab->Name() == key && tab->IsRedisDoc() == is_redis) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void MainWindow::SelectOpenTab(const std::string &key, bool is_redis) {
+    for (auto i = 0; i < tabs.count(); ++i) {
+        auto *tab = dynamic_cast<TabDocument*>(tabs.widget(i));
+        if (tab->Name() == key && tab->IsRedisDoc() == is_redis) {
+            tabs.setCurrentIndex(i);
+            break;
         }
     }
 }
 
-void MainWindow::AddTab(const std::string &name, TabDocument *document) {
-    tabs.addTab(document, QString::fromStdString(name));
+void MainWindow::AddTab(TabDocument *document) {
+    int index = tabs.addTab(document, QString::fromStdString(document->Name()));
+    tabs.setCurrentIndex(index);
     connect(document, &TabDocument::CloseTab, this, &MainWindow::CloseTab);
 }
 
@@ -224,10 +253,16 @@ void MainWindow::ChangeRedisConnection(RedisConnectionPtr &new_connection) {
             return;
         }
         redis->Disconnect();
+        this->keys_list.clear();
     }
     redis = new_connection;
-    redis->Connect();
-    connection_status.setText("Connected");
+    try {
+        redis->Connect();
+        connection_status.setText("Connected");
+    }
+    catch (RedisConnectionException &ex) {
+        QMessageBox::critical(this, "Error", ex.what());
+    }
     ReloadKeys();
 }
 
@@ -278,30 +313,59 @@ void MainWindow::ReloadKeys() {
         }
         task_queue->RunTask<std::vector<std::string>>([filter, this](){
             return this->redis->SCAN(filter, KeyTypeAny);
-        }, [this](std::vector<std::string> &keys){
-            this->keys_list = keys;
-            std::sort(this->keys_list.begin(), this->keys_list.end());
-            UpdateKeysList();
+        }, [this](std::vector<std::string> &keys, const std::string &error){
+            if (error.length()) {
+                QMessageBox::critical(this, "Error", QString::fromStdString(error));
+                connection_status.setText("Disconnected");
+            }
+            else {
+                this->keys_list = keys;
+                std::sort(this->keys_list.begin(), this->keys_list.end());
+                UpdateKeysList();
+            }
             // TODO: Hide the spinner on the keys list
         });
     }
 }
 
 void MainWindow::SelectKey(QTreeWidgetItem *item, int column) {
-    if (!item->childCount()) { // We only care about bottom level items
-        std::string full_key;
-        std::string join_character = std::string(1, settings.GroupChar());
-        QTreeWidgetItem *current_item = item;
-        do {
-            if (full_key.length()) {
-                full_key = current_item->text(0).toStdString() + join_character + full_key;
-            }
-            else {
-                full_key = current_item->text(0).toStdString();
-            }
-            current_item = current_item->parent();
-        } while (current_item);
-        ShowStatusMessage(full_key);
+    std::string key = item->toolTip(0).toStdString();
+    if (!HasOpenTab(key, true)) {
+        if (!key.empty()) {
+            ShowStatusMessage(key);
+            task_queue->RunTask<KeyType>([key, this]() {
+                return redis->TYPE(key);
+            }, [key, this](KeyType &type, const std::string &error) {
+                TabDocument *doc;
+                switch (type) {
+                    case KeyTypeString:
+                        doc = new StringTabDocument(key, redis, task_queue);
+                        break;
+                    case KeyTypeList:
+                        ShowStatusMessage("List");
+                        throw std::runtime_error("Not Implemented");
+                        break;
+                    case KeyTypeSet:
+                        ShowStatusMessage("Set");
+                        throw std::runtime_error("Not Implemented");
+                        break;
+                    case KeyTypeZSet:
+                        ShowStatusMessage("Zset");
+                        throw std::runtime_error("Not Implemented");
+                        break;
+                    case KeyTypeHash:
+                        ShowStatusMessage("Hash");
+                        throw std::runtime_error("Not Implemented");
+                        break;
+                    default:
+                        throw std::runtime_error("Encountered unknown type");
+                }
+                AddTab(doc);
+            });
+        }
+    }
+    else {
+        SelectOpenTab(key, true);
     }
 }
 

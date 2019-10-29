@@ -5,6 +5,7 @@
 //
 
 #include "standard_redis_connection.h"
+#include "redis_exceptions.h"
 
 StandardRedisConnection::StandardRedisConnection(const std::string &host, const int &port) {
     this->host = host;
@@ -14,7 +15,14 @@ StandardRedisConnection::StandardRedisConnection(const std::string &host, const 
 void StandardRedisConnection::Connect() {
     if (this->context == nullptr) {
         this->context = redisConnect(this->host.c_str(), this->port);
-        redisEnableKeepAlive(this->context);
+        auto reply = static_cast<redisReply*>(redisCommand(this->context, "PING"));
+        if (reply) {
+            redisEnableKeepAlive(this->context);
+        }
+        else {
+            Disconnect();
+            throw RedisConnectionException();
+        }
     }
 }
 
@@ -38,8 +46,8 @@ std::vector<std::string> StandardRedisConnection::KEYS(const std::string &search
     auto *reply = static_cast<redisReply*>(redisCommand(this->context, command.c_str()));
     std::vector<std::string> keys;
     if (!reply) {
-        // TODO: throw not connected exception
-        return {};
+        Disconnect();
+        throw RedisDisconnectedException();
     }
     for (size_t i = 0; i < reply->elements; ++i) {
         redisReply *element_ptr = reply->element[i];
@@ -61,8 +69,8 @@ std::vector<std::string> StandardRedisConnection::SCAN(const std::string &search
         std::string command = "SCAN " + std::to_string(cursor) + " " + command_end;
         auto *reply = static_cast<redisReply *>(redisCommand(this->context, command.c_str()));
         if (!reply) {
-            // TODO: throw not connected exception
-            break;
+            Disconnect();
+            throw RedisDisconnectedException();
         }
         if (reply->elements == 2) {
             redisReply *cursor_ptr = reply->element[0];
@@ -81,17 +89,46 @@ std::vector<std::string> StandardRedisConnection::SCAN(const std::string &search
     return keys;
 }
 
-// TODO: Here down
-
 KeyType StandardRedisConnection::TYPE(const std::string &key) {
     std::string command = "TYPE " + key;
     auto *reply = static_cast<redisReply *>(redisCommand(this->context, command.c_str()));
-    return KeyTypeAny;
+    if (reply == nullptr) {
+        Disconnect();
+        throw RedisDisconnectedException();
+    }
+    else if (strcmp(reply->str, "string") == 0) {
+        return KeyTypeString;
+    }
+    else if (strcmp(reply->str, "list") == 0) {
+        return KeyTypeList;
+    }
+    else if (strcmp(reply->str, "set") == 0) {
+        return KeyTypeSet;
+    }
+    else if (strcmp(reply->str, "zset") == 0) {
+        return KeyTypeZSet;
+    }
+    else if (strcmp(reply->str, "hash") == 0) {
+        return KeyTypeHash;
+    }
+    else {
+        throw RedisUnknownTypeException();
+    }
 }
 
 std::string StandardRedisConnection::GET(const std::string &key) {
-    return "";
+    std::string command = "GET " + key;
+    auto *reply = static_cast<redisReply *>(redisCommand(this->context, command.c_str()));
+    if (reply == nullptr) {
+        Disconnect();
+        throw RedisDisconnectedException();
+    }
+    else {
+        return reply->str;
+    }
 }
+
+// TODO: Here down
 
 bool StandardRedisConnection::SET(const std::string &key, const std::string &value) {
     return false;

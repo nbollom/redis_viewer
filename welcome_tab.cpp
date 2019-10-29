@@ -21,6 +21,10 @@ WelcomeTab::WelcomeTab() {
     body.setWordWrap(true);
 }
 
+std::string WelcomeTab::Name() {
+    return "Welcome";
+}
+
 bool WelcomeTab::CanClose() {
     return true;
 }

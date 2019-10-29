@@ -25,6 +25,9 @@ QuickConnectDialog::QuickConnectDialog() {
     host_label.setText("Host:");
     host_label.setToolTip("Host Name/IP Address");
     host_value.setPlaceholderText("Host Name/IP Address");
+    // TODO: Temporary dev hack
+    host_value.setText("127.0.0.1");
+
     port_label.setText("Port:");
     port_label.setToolTip("Port (default 6379)");
     port_value.setPlaceholderText("Port (default 6379)");

@@ -53,7 +53,9 @@ protected:
     void UpdateKeysList();
     void ShowStatusMessage(const std::string &message);
     void UpdateRecentConnections();
-    void AddTab(const std::string &name, TabDocument *document);
+    bool HasOpenTab(const std::string &key, bool is_redis);
+    void SelectOpenTab(const std::string &key, bool is_redis);
+    void AddTab(TabDocument *document);
     void ChangeRedisConnection(RedisConnectionPtr &new_connection);
 
 public:

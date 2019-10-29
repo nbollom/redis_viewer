@@ -15,7 +15,8 @@ template <typename T>
 struct Task{
     T data;
     std::function<T(void)> task_method = nullptr;
-    std::function<void(T&)> callback = nullptr;
+    std::function<void(T&, const std::string&)> callback = nullptr;
+    std::string error;
 };
 
 class TaskQueue {
@@ -28,7 +29,7 @@ public:
     ~TaskQueue();
 
     template <typename T>
-    void RunTask(const std::function<T(void)> &task_method, const std::function<void(T&)> &callback) {
+    void RunTask(const std::function<T(void)> &task_method, const std::function<void(T&, const std::string&)> &callback) {
         auto *task = new Task<T>();
         task->task_method = task_method;
         task->callback = callback;
@@ -36,11 +37,16 @@ public:
         req->data = task;
         uv_work_cb work_cb = [](uv_work_t *req) {
             auto *task = static_cast<Task<T>*>(req->data);
-            task->data = task->task_method();
+            try {
+                task->data = task->task_method();
+            }
+            catch (std::exception &ex) {
+                task->error = ex.what();
+            }
         };
         uv_after_work_cb after_cb = [](uv_work_t *req, int status) {
             auto *task = static_cast<Task<T>*>(req->data);
-            task->callback(task->data);
+            task->callback(task->data, task->error);
             delete(req);
             delete(task);
         };
