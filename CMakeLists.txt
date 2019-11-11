@@ -5,19 +5,71 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 set(REDIS_VIEWER_SOURCES
-    main.cpp
-    main_window.cpp main_window.h
-    welcome_tab.cpp welcome_tab.h
-        controller.cpp controller.h redis_connection.h tab_document.h settings.cpp settings.h serialiser.cpp serialiser.h standard_redis_connection.cpp standard_redis_connection.h task_queue.cpp task_queue.h quick_connect_dialog.cpp quick_connect_dialog.h redis_connection.cpp redis_exceptions.h string_tab_document.cpp string_tab_document.h)
+        ${PROJECT_BINARY_DIR}/config.h
+        controller.cpp
+        controller.h
+        gzip.h
+        images.qrc
+        json.h
+        main.cpp
+        main_window.cpp
+        main_window.h
+        quick_connect_dialog.cpp
+        quick_connect_dialog.h
+        redis_connection.cpp
+        redis_connection.h
+        redis_exceptions.h
+        serialiser.cpp
+        serialiser.h
+        settings.cpp
+        settings.h
+        standard_redis_connection.cpp
+        standard_redis_connection.h
+        string_tab_document.cpp
+        string_tab_document.h
+        tab_document.h
+        task_queue.cpp
+        task_queue.h
+        value_editor.cpp
+        value_editor.h
+        welcome_tab.cpp
+        welcome_tab.h
+)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
-find_package(hiredis REQUIRED)
-find_package(libuv REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED) # GUI
+find_package(hiredis REQUIRED) # For connecting to redis servers
+find_package(libuv REQUIRED) # Run stuff in a background thread
+find_package(cppcodec) # Base64 encoding/decoding for values (optional)
+find_package(ZLIB) # GZip compression for values (optional)
 
-include_directories(${HIREDIS_INCLUDE_DIRS} ${LIBUV_INCLUDE_DIRS})
-add_executable(redis_viewer ${REDIS_VIEWER_SOURCES} images.qrc)
-target_link_libraries(redis_viewer Qt5::Core Qt5::Widgets ${HIREDIS_LIBRARIES} ${LIBUV_LIBRARIES})
+if(${CPPCODEC_FOUND})
+    set(ENABLE_BASE64 ON)
+endif()
+
+if(${ZLIB_FOUND})
+    set(ENABLE_ZLIB ON)
+endif()
+
+configure_file(config.h.in config.h)
+
+include_directories(
+        ${HIREDIS_INCLUDE_DIRS}
+        ${LIBUV_INCLUDE_DIRS}
+        ${CPPCODEC_INCLUDE_DIRS}
+        ${ZLIB_INCLUDE_DIRS}
+        ${PROJECT_BINARY_DIR}
+)
+
+add_executable(redis_viewer ${REDIS_VIEWER_SOURCES})
+
+target_link_libraries(
+        redis_viewer
+        Qt5::Core
+        Qt5::Widgets
+        ${HIREDIS_LIBRARIES}
+        ${LIBUV_LIBRARIES}
+        ${ZLIB_LIBRARIES}
+)

@@ -57,6 +57,7 @@ protected:
     void SelectOpenTab(const std::string &key, bool is_redis);
     void AddTab(TabDocument *document);
     void ChangeRedisConnection(RedisConnectionPtr &new_connection);
+    void AsyncCloseTab(int index, const std::function<void(bool)>& callback);
 
 public:
     MainWindow();
@@ -75,7 +76,6 @@ public slots:
 
     void Exit();
     void ShowConnectionManager();
-    void CloseTab(TabDocument *document);
     void ClosingTab(int index);
 
 

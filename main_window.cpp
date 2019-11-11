@@ -19,7 +19,7 @@
 MainWindow::MainWindow() {
     // Load Settings
     settings.Load();
-    task_queue = std::make_shared<TaskQueue>();
+    task_queue = GetTaskQueue();
     connect(&task_queue_timer, &QTimer::timeout, this, &MainWindow::ProcessTasks);
     task_queue_timer.start(100);
 
@@ -98,11 +98,22 @@ MainWindow::MainWindow() {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-    for (auto i = tabs.count() - 1; i >= 0; --i) {
-        ClosingTab(i);
-    }
     if (tabs.count()) {
         event->ignore();
+        int count = tabs.count();
+        int *closed = new int(0);
+        for (auto i = tabs.count() - 1; i >= 0; --i) {
+            AsyncCloseTab(i, [this, closed, count] (bool success) {
+                if (success) {
+                    (*closed)++;
+                    if (*closed == count) {
+                        // All done, retry closing the window
+                        delete closed;
+                        this->close();
+                    }
+                }
+            });
+        }
     }
     else {
         settings.SetMainWindowX(x());
@@ -208,6 +219,7 @@ void MainWindow::UpdateKeysList() {
         }
     }
     ShowStatusMessage("Done");
+    redis_keys_tree.setFocus();
 }
 
 bool MainWindow::HasOpenTab(const std::string &key, bool is_redis) {
@@ -233,7 +245,6 @@ void MainWindow::SelectOpenTab(const std::string &key, bool is_redis) {
 void MainWindow::AddTab(TabDocument *document) {
     int index = tabs.addTab(document, QString::fromStdString(document->Name()));
     tabs.setCurrentIndex(index);
-    connect(document, &TabDocument::CloseTab, this, &MainWindow::CloseTab);
 }
 
 void MainWindow::ChangeRedisConnection(RedisConnectionPtr &new_connection) {
@@ -242,7 +253,9 @@ void MainWindow::ChangeRedisConnection(RedisConnectionPtr &new_connection) {
         for (auto i = tabs.count() - 1; i >= 0; --i) {
             auto *tab = dynamic_cast<TabDocument*>(tabs.widget(i));
             if (tab->IsRedisDoc()) {
-                ClosingTab(i);
+                AsyncCloseTab(i, [](bool success){
+                    // TODO: move logic below in here
+                });
             }
             else {
                 non_doc_tabs++;
@@ -264,6 +277,22 @@ void MainWindow::ChangeRedisConnection(RedisConnectionPtr &new_connection) {
         QMessageBox::critical(this, "Error", ex.what());
     }
     ReloadKeys();
+}
+
+void MainWindow::AsyncCloseTab(int index, const std::function<void(bool)>& callback) {
+    auto *tab = dynamic_cast<TabDocument*>(tabs.widget(index));
+    if (tab->CanClose()) {
+        delete tab;
+        task_queue->RunLater([callback](){
+            callback(true);
+        });
+    }
+    else {
+        // TODO: save the tab
+        task_queue->RunLater([callback](){
+            callback(false);
+        });
+    }
 }
 
 void MainWindow::AddKey() {
@@ -339,23 +368,23 @@ void MainWindow::SelectKey(QTreeWidgetItem *item, int column) {
                 TabDocument *doc;
                 switch (type) {
                     case KeyTypeString:
-                        doc = new StringTabDocument(key, redis, task_queue);
+                        doc = new StringTabDocument(key, redis);
                         break;
                     case KeyTypeList:
                         ShowStatusMessage("List");
-                        throw std::runtime_error("Not Implemented");
+                        return;
                         break;
                     case KeyTypeSet:
                         ShowStatusMessage("Set");
-                        throw std::runtime_error("Not Implemented");
+                        return;
                         break;
                     case KeyTypeZSet:
                         ShowStatusMessage("Zset");
-                        throw std::runtime_error("Not Implemented");
+                        return;
                         break;
                     case KeyTypeHash:
                         ShowStatusMessage("Hash");
-                        throw std::runtime_error("Not Implemented");
+                        return;
                         break;
                     default:
                         throw std::runtime_error("Encountered unknown type");
@@ -377,13 +406,8 @@ void MainWindow::ShowConnectionManager() {
     // TODO: Show Connection Manager
 }
 
-void MainWindow::CloseTab(TabDocument *document) {
-    ClosingTab(tabs.indexOf(document));
-}
-
 void MainWindow::ClosingTab(int index) {
-    auto *tab = dynamic_cast<TabDocument*>(tabs.widget(index));
-    if (tab->CanClose()) {
-        delete tab;
-    }
+    AsyncCloseTab(index, [](bool success){
+
+    });
 }

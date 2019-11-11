@@ -1,0 +1,13 @@
+//
+// config.h
+// Created by TheFatNinja
+// 01-11-2019
+//
+
+#ifndef REDIS_VIEWER_CONFIG_H
+#define REDIS_VIEWER_CONFIG_H
+
+#cmakedefine ENABLE_BASE64
+#cmakedefine ENABLE_ZLIB
+
+#endif //REDIS_VIEWER_CONFIG_H

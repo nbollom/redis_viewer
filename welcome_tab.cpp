@@ -5,6 +5,7 @@
 //
 
 #include "welcome_tab.h"
+#include "task_queue.h"
 
 WelcomeTab::WelcomeTab() {
     setLayout(&layout);
@@ -31,4 +32,12 @@ bool WelcomeTab::CanClose() {
 
 bool WelcomeTab::IsRedisDoc() {
     return false;
+}
+
+void WelcomeTab::Save(std::function<void(bool)> &callback) {
+    // This should not ever be called but evoke the callback anyway just in case
+    TaskQueuePtr queue = GetTaskQueue();
+    queue->RunLater([callback](){
+        callback(true);
+    });
 }

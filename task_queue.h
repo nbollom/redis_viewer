@@ -19,6 +19,10 @@ struct Task{
     std::string error;
 };
 
+struct RunLaterTask {
+    std::function<void(void)> callback = nullptr;
+};
+
 class TaskQueue {
 
 private:
@@ -53,10 +57,13 @@ public:
         uv_queue_work(loop, req, work_cb, after_cb);
     }
 
+    void RunLater(const std::function<void(void)> &callback);
     void ProcessCallbacks();
 
 };
 
 typedef std::shared_ptr<TaskQueue> TaskQueuePtr;
+
+TaskQueuePtr GetTaskQueue();
 
 #endif //REDIS_VIEWER_TASK_QUEUE_H

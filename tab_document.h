@@ -8,6 +8,7 @@
 #define REDIS_VIEWER_TAB_DOCUMENT_H
 
 #include <QWidget>
+#include <functional>
 
 class TabDocument : public QWidget {
     Q_OBJECT
@@ -19,9 +20,7 @@ public:
     virtual std::string Name() = 0;
     virtual bool CanClose() = 0;
     virtual bool IsRedisDoc() = 0;
-
-signals:
-    void CloseTab(TabDocument *doc);
+    virtual void Save(std::function<void(bool)> &callback) = 0;
 
 };
 
