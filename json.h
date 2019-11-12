@@ -8,6 +8,7 @@
 #define REDIS_VIEWER_JSON_H
 
 #include <string>
+#include <stack>
 
 namespace json {
 

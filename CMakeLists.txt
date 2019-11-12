@@ -45,23 +45,24 @@ find_package(libuv REQUIRED) # Run stuff in a background thread
 find_package(cppcodec) # Base64 encoding/decoding for values (optional)
 find_package(ZLIB) # GZip compression for values (optional)
 
+include_directories(
+        ${HIREDIS_INCLUDE_DIRS}
+        ${LIBUV_INCLUDE_DIRS}
+        ${PROJECT_BINARY_DIR}
+)
+
 if(${CPPCODEC_FOUND})
     set(ENABLE_BASE64 ON)
+    include_directories(${CPPCODEC_INCLUDE_DIRS})
 endif()
 
 if(${ZLIB_FOUND})
     set(ENABLE_ZLIB ON)
+    include_directories(${ZLIB_INCLUDE_DIRS})
 endif()
 
 configure_file(config.h.in config.h)
 
-include_directories(
-        ${HIREDIS_INCLUDE_DIRS}
-        ${LIBUV_INCLUDE_DIRS}
-        ${CPPCODEC_INCLUDE_DIRS}
-        ${ZLIB_INCLUDE_DIRS}
-        ${PROJECT_BINARY_DIR}
-)
 
 add_executable(redis_viewer ${REDIS_VIEWER_SOURCES})
 

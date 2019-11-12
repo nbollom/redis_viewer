@@ -37,17 +37,17 @@ private:
     } EditorType;
 
     const std::array<std::string, EditorTypesTotal> EditorTypeNameLookup = {
-        "String",
-        "JSON",
-        "XML",
+        "String"
+        ,"JSON"
+        ,"XML"
 #ifdef ENABLE_BASE64
-        "Base64 String",
-        "Base64 JSON",
-        "Base64 XML"
+        ,"Base64 String"
+        ,"Base64 JSON"
+        ,"Base64 XML"
 #ifdef ENABLE_ZLIB
-        "Base64 GZip String",
-        "Base64 GZip JSON",
-        "Base64 GZip XML"
+        ,"Base64 GZip String"
+        ,"Base64 GZip JSON"
+        ,"Base64 GZip XML"
 #endif // ENABLE_ZLIB
 #endif // ENABLE_BASE64
     };

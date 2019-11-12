@@ -10,6 +10,7 @@
 #include <uv.h>
 #include <functional>
 #include <memory>
+#include <string>
 
 template <typename T>
 struct Task{

@@ -11,10 +11,9 @@
 #include <stack>
 #ifdef ENABLE_ZLIB
 #include "gzip.h"
-#include "json.h"
-
 #endif // ENABLE_ZLIB
 #endif // ENABLE_BASE64
+#include "json.h"
 
 
 ValueEditor::ValueEditor() {
