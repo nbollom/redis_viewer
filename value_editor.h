@@ -12,6 +12,7 @@
 #include <QTextEdit>
 #include <QLabel>
 #include <QComboBox>
+#include <array>
 #include "config.h"
 
 class ValueEditor : public QWidget {
