@@ -18,6 +18,7 @@
 #include <QLabel>
 #include <QMenu>
 #include <QTimer>
+#include <vector>
 #include "tab_document.h"
 #include "settings.h"
 #include "redis_connection.h"

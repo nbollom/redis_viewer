@@ -34,7 +34,7 @@ bool WelcomeTab::IsRedisDoc() {
     return false;
 }
 
-void WelcomeTab::Save(std::function<void(bool)> &callback) {
+void WelcomeTab::Save(const std::function<void(bool)> &callback) {
     // This should not ever be called but evoke the callback anyway just in case
     TaskQueuePtr queue = GetTaskQueue();
     queue->RunLater([callback](){

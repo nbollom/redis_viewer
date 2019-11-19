@@ -24,7 +24,7 @@ public:
     WelcomeTab();
     bool CanClose() override ;
     bool IsRedisDoc() override;
-    void Save(std::function<void(bool)> &callback) override;
+    void Save(const std::function<void(bool)> &callback) override;
 
 };
 

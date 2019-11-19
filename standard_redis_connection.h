@@ -34,42 +34,42 @@ public:
     // String type methods
     std::string GET(const std::string &key) override;
     bool SET(const std::string &key, const std::string &value) override;
-    int DEL(const std::string &key) override;
-    int DEL(const std::vector<std::string> &keys) override;
+    long long int DEL(const std::string &key) override;
+    long long int DEL(const std::vector<std::string> &keys) override;
 
     // List type methods
     std::vector<std::string> LRANGE(const std::string &key, const int &first, const int &last) override;
-    int LPUSH(const std::string &key, const std::string &value) override;
-    int LPUSHX(const std::string &key, const std::string &value) override;
-    int LSET(const std::string &key, const int &index, const std::string &value) override;
-    int LINSERT(const std::string &key, bool before, const std::string &reference_value, const std::string &value) override;
-    int RPUSH(const std::string &key, const std::string &value) override;
-    int RPUSHX(const std::string &key, const std::string &value) override;
-    int LREM(const std::string &key, const std::string &value) override;
+    long long int LPUSH(const std::string &key, const std::string &value) override;
+    long long int LPUSHX(const std::string &key, const std::string &value) override;
+    long long int LSET(const std::string &key, const int &index, const std::string &value) override;
+    long long int LINSERT(const std::string &key, bool before, const std::string &reference_value, const std::string &value) override;
+    long long int RPUSH(const std::string &key, const std::string &value) override;
+    long long int RPUSHX(const std::string &key, const std::string &value) override;
+    long long int LREM(const std::string &key, const std::string &value) override;
     std::string LPOP(const std::string &key) override;
     std::string RPOP(const std::string &key) override;
 
     // Set type methods
     std::vector<std::string> SMEMBERS(const std::string &key) override;
     std::vector<std::string> SSCAN(const std::string &key, const std::string &search_string) override;
-    int SADD(const std::string &key, const std::string &value) override;
-    int SREM(const std::string &key, const std::string &value) override;
-    int SREM(const std::string &key, const std::vector<std::string> &values) override;
+    long long int SADD(const std::string &key, const std::string &value) override;
+    long long int SREM(const std::string &key, const std::string &value) override;
+    long long int SREM(const std::string &key, const std::vector<std::string> &values) override;
 
     // Set type methods
     std::vector<std::string> ZRANGE(const std::string &key, const int &start, const int &end) override;
     std::map<std::string, double> ZSCAN(const std::string &key, const std::string &search_string) override;
-    int ZADD(const std::string &key, const double &score, const std::string &value) override;
-    int ZREM(const std::string &key, const std::string &value) override;
-    int ZREM(const std::string &key, const std::vector<std::string> &values) override;
+    long long int ZADD(const std::string &key, const double &score, const std::string &value) override;
+    long long int ZREM(const std::string &key, const std::string &value) override;
+    long long int ZREM(const std::string &key, const std::vector<std::string> &values) override;
 
     // Hash type methods
     std::vector<std::string> HKEYS(const std::string &key) override;
     std::map<std::string, std::string> HSCAN(const std::string &key, const std::string &search_string) override;
     std::string HGET(const std::string &key, const std::string &field) override;
     bool HSET(const std::string &key, const std::string &field, const std::string &value) override;
-    int HDEL(const std::string &key, const std::string &field) override;
-    int HDEL(const std::string &key, const std::vector<std::string> &fields) override;
+    long long int HDEL(const std::string &key, const std::string &field) override;
+    long long int HDEL(const std::string &key, const std::vector<std::string> &fields) override;
 };
 
 typedef std::shared_ptr<StandardRedisConnection> StandardRedisConnectionPtr;

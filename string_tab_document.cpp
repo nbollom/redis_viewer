@@ -47,7 +47,7 @@ std::string StringTabDocument::Name() {
     return key_name;
 }
 
-void StringTabDocument::Save(std::function<void(bool)> &callback) {
+void StringTabDocument::Save(const std::function<void(bool)> &callback) {
     TaskQueuePtr queue = GetTaskQueue();
     if (has_changes) {
         try {
@@ -56,9 +56,9 @@ void StringTabDocument::Save(std::function<void(bool)> &callback) {
             queue->RunTask<bool>([this, value]() {
                 return redis->SET(key_name, value);
             }, [this, callback](bool &value, const std::string &error) {
-                bool success = value && !error.empty();
+                bool success = value && error.empty();
                 if (!success) {
-                    if (error.empty()) {
+                    if (!error.empty()) {
                         QString error_str = QString::fromStdString(error);
                         QMessageBox::critical(this, "Error", error_str);
                     }

@@ -18,6 +18,7 @@ void StandardRedisConnection::Connect() {
         auto reply = static_cast<redisReply*>(redisCommand(this->context, "PING"));
         if (reply) {
             redisEnableKeepAlive(this->context);
+            freeReplyObject(reply);
         }
         else {
             Disconnect();
@@ -42,8 +43,7 @@ RedisConnectionType StandardRedisConnection::Type() {
 }
 
 std::vector<std::string> StandardRedisConnection::KEYS(const std::string &search_string) {
-    std::string command = "KEYS " + search_string;
-    auto *reply = static_cast<redisReply*>(redisCommand(this->context, command.c_str()));
+    auto *reply = static_cast<redisReply*>(redisCommand(this->context, "KEYS %b", search_string.data(), search_string.size()));
     std::vector<std::string> keys;
     if (!reply) {
         Disconnect();
@@ -54,20 +54,22 @@ std::vector<std::string> StandardRedisConnection::KEYS(const std::string &search
         std::string key = element_ptr->str;
         keys.emplace_back(key);
     }
+    freeReplyObject(reply);
     return keys;
 }
 
 std::vector<std::string> StandardRedisConnection::SCAN(const std::string &search_string, const KeyType &type) {
     int cursor = 0;
-    std::string command_end = "MATCH " + search_string;
-    if (type != KeyTypeAny) {
-        std::string key_type = KeyTypeName[type];
-        command_end = command_end + " TYPE " + key_type;
-    }
     std::vector<std::string> keys;
     while(true) {
-        std::string command = "SCAN " + std::to_string(cursor) + " " + command_end;
-        auto *reply = static_cast<redisReply *>(redisCommand(this->context, command.c_str()));
+        redisReply *reply = nullptr;
+        if (type != KeyTypeAny) {
+            std::string key_type = KeyTypeName[type];
+            reply = static_cast<redisReply*>(redisCommand(this->context, "SCAN %d MATCH %b TYPE %b", cursor, search_string.data(), search_string.size(), key_type.data(), key_type.size()));
+        }
+        else {
+            reply = static_cast<redisReply*>(redisCommand(this->context, "SCAN %d MATCH %b", cursor, search_string.data(), search_string.size()));
+        }
         if (!reply) {
             Disconnect();
             throw RedisDisconnectedException();
@@ -85,96 +87,126 @@ std::vector<std::string> StandardRedisConnection::SCAN(const std::string &search
                 break;
             }
         }
+        freeReplyObject(reply);
     }
     return keys;
 }
 
 KeyType StandardRedisConnection::TYPE(const std::string &key) {
-    std::string command = "TYPE " + key;
-    auto *reply = static_cast<redisReply *>(redisCommand(this->context, command.c_str()));
+    auto *reply = static_cast<redisReply*>(redisCommand(this->context, "TYPE %b", key.data(), key.size()));
+    KeyType type;
     if (reply == nullptr) {
         Disconnect();
         throw RedisDisconnectedException();
     }
     else if (strcmp(reply->str, "string") == 0) {
-        return KeyTypeString;
+        type = KeyTypeString;
     }
     else if (strcmp(reply->str, "list") == 0) {
-        return KeyTypeList;
+        type = KeyTypeList;
     }
     else if (strcmp(reply->str, "set") == 0) {
-        return KeyTypeSet;
+        type = KeyTypeSet;
     }
     else if (strcmp(reply->str, "zset") == 0) {
-        return KeyTypeZSet;
+        type = KeyTypeZSet;
     }
     else if (strcmp(reply->str, "hash") == 0) {
-        return KeyTypeHash;
+        type = KeyTypeHash;
     }
     else {
         throw RedisUnknownTypeException();
     }
+    freeReplyObject(reply);
+    return type;
 }
 
 std::string StandardRedisConnection::GET(const std::string &key) {
-    std::string command = "GET " + key;
-    auto *reply = static_cast<redisReply *>(redisCommand(this->context, command.c_str()));
+    auto *reply = static_cast<redisReply*>(redisCommand(this->context, "GET %b", key.data(), key.size()));
     if (reply == nullptr) {
         Disconnect();
         throw RedisDisconnectedException();
     }
     else {
-        return reply->str;
+        std::string val = reply->str;
+        freeReplyObject(reply);
+        return val;
     }
 }
 
-// TODO: Here down
-
 bool StandardRedisConnection::SET(const std::string &key, const std::string &value) {
-    return false;
+    auto *reply = static_cast<redisReply*>(redisCommand(this->context, "SET %b %b", key.data(), key.size(), value.data(), value.size()));
+    if (reply == nullptr) {
+        Disconnect();
+        throw RedisDisconnectedException();
+    }
+    else {
+        bool success = strcmp(reply->str, "OK") == 0;
+        freeReplyObject(reply);
+        return success;
+    }
 }
 
-int StandardRedisConnection::DEL(const std::string &key) {
-    return 0;
+long long int StandardRedisConnection::DEL(const std::string &key) {
+    auto *reply = static_cast<redisReply*>(redisCommand(this->context, "DEL %b", key.data(), key.size()));
+    if (reply == nullptr) {
+        Disconnect();
+        throw RedisDisconnectedException();
+    }
+    else {
+        long long int val = reply->integer;
+        freeReplyObject(reply);
+        return val;
+    }
 }
 
-int StandardRedisConnection::DEL(const std::vector<std::string> &keys) {
-    int count = 0;
+long long int StandardRedisConnection::DEL(const std::vector<std::string> &keys) {
+    long long int count = 0;
+    long long int commands = 0;
     for (auto &key: keys) {
-        count += DEL(key);
+        redisAppendCommand(this->context, "DEL %b", key.data(), key.size());
+        commands++;
+    }
+    redisReply *reply;
+    for (long long int i = 0; i < commands; ++i) {
+        redisGetReply(this->context, (void**)&reply);
+        count += reply->integer;
+        freeReplyObject(reply);
     }
     return count;
 }
+
+// TODO: Here down
 
 std::vector<std::string> StandardRedisConnection::LRANGE(const std::string &key, const int &first, const int &last) {
     return {};
 }
 
-int StandardRedisConnection::LPUSH(const std::string &key, const std::string &value) {
+long long int StandardRedisConnection::LPUSH(const std::string &key, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::LPUSHX(const std::string &key, const std::string &value) {
+long long int StandardRedisConnection::LPUSHX(const std::string &key, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::LSET(const std::string &key, const int &index, const std::string &value) {
+long long int StandardRedisConnection::LSET(const std::string &key, const int &index, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::LINSERT(const std::string &key, bool before, const std::string &reference_value, const std::string &value) {
+long long int StandardRedisConnection::LINSERT(const std::string &key, bool before, const std::string &reference_value, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::RPUSH(const std::string &key, const std::string &value) {
+long long int StandardRedisConnection::RPUSH(const std::string &key, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::RPUSHX(const std::string &key, const std::string &value) {
+long long int StandardRedisConnection::RPUSHX(const std::string &key, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::LREM(const std::string &key, const std::string &value) {
+long long int StandardRedisConnection::LREM(const std::string &key, const std::string &value) {
     return 0;
 }
 
@@ -194,15 +226,15 @@ std::vector<std::string> StandardRedisConnection::SSCAN(const std::string &key, 
     return {};
 }
 
-int StandardRedisConnection::SADD(const std::string &key, const std::string &value) {
+long long int StandardRedisConnection::SADD(const std::string &key, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::SREM(const std::string &key, const std::string &value) {
+long long int StandardRedisConnection::SREM(const std::string &key, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::SREM(const std::string &key, const std::vector<std::string> &values) {
+long long int StandardRedisConnection::SREM(const std::string &key, const std::vector<std::string> &values) {
     int count = 0;
     for (auto &value: values) {
         count += SREM(key, value);
@@ -218,15 +250,15 @@ std::map<std::string, double> StandardRedisConnection::ZSCAN(const std::string &
     return {};
 }
 
-int StandardRedisConnection::ZADD(const std::string &key, const double &score, const std::string &value) {
+long long int StandardRedisConnection::ZADD(const std::string &key, const double &score, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::ZREM(const std::string &key, const std::string &value) {
+long long int StandardRedisConnection::ZREM(const std::string &key, const std::string &value) {
     return 0;
 }
 
-int StandardRedisConnection::ZREM(const std::string &key, const std::vector<std::string> &values) {
+long long int StandardRedisConnection::ZREM(const std::string &key, const std::vector<std::string> &values) {
     int count = 0;
     for (auto& value: values) {
         count += ZREM(key, value);
@@ -250,11 +282,11 @@ bool StandardRedisConnection::HSET(const std::string &key, const std::string &fi
     return false;
 }
 
-int StandardRedisConnection::HDEL(const std::string &key, const std::string &field) {
+long long int StandardRedisConnection::HDEL(const std::string &key, const std::string &field) {
     return 0;
 }
 
-int StandardRedisConnection::HDEL(const std::string &key, const std::vector<std::string> &fields) {
+long long int StandardRedisConnection::HDEL(const std::string &key, const std::vector<std::string> &fields) {
     int count = 0;
     for (auto& field: fields) {
         count += HDEL(key, field);

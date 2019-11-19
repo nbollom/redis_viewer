@@ -20,7 +20,7 @@ public:
     virtual std::string Name() = 0;
     virtual bool CanClose() = 0;
     virtual bool IsRedisDoc() = 0;
-    virtual void Save(std::function<void(bool)> &callback) = 0;
+    virtual void Save(const std::function<void(bool)> &callback) = 0;
 
 };
 

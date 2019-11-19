@@ -288,9 +288,11 @@ void MainWindow::AsyncCloseTab(int index, const std::function<void(bool)>& callb
         });
     }
     else {
-        // TODO: save the tab
-        task_queue->RunLater([callback](){
-            callback(false);
+        tab->Save([callback, tab](bool success){
+            if (success) {
+                delete tab;
+            }
+            callback(success);
         });
     }
 }
@@ -301,21 +303,49 @@ void MainWindow::AddKey() {
 
 void MainWindow::DeleteKey() {
     QList<QTreeWidgetItem *> selected = redis_keys_tree.selectedItems();
-    std::list<std::string> keys_to_delete;
+    std::vector<std::string> keys_to_delete;
+    std::function<void(const QTreeWidgetItem *)> get_keys_to_delete;
+    get_keys_to_delete = [&keys_to_delete, &get_keys_to_delete] (const QTreeWidgetItem *item) {
+        std::string tooltip = item->toolTip(0).toStdString();
+        if (!tooltip.empty()) {
+            keys_to_delete.emplace_back(tooltip);
+        }
+        for (int i = 0; i < item->childCount(); ++i) {
+            get_keys_to_delete(item->child(i));
+        }
+    };
     for (const auto &item: selected) {
-        if (item->childCount()) {
-            // TODO: Find end children and add to list
+        get_keys_to_delete(item);
+    }
+    std::function<void(long long int&, const std::string&)> done_callback = [this, keys_to_delete, selected](long long int &value, const std::string &error){
+        if (error.length()) {
+            QMessageBox::critical(this, "Error", QString::fromStdString(error));
+            connection_status.setText("Disconnected");
         }
         else {
-            // TODO: Get full key name (probably have to use parents)
+            keys_list.erase(std::remove_if(keys_list.begin(), keys_list.end(), [&keys_to_delete, &selected](const std::string& val){
+                return std::find(keys_to_delete.begin(), keys_to_delete.end(), val) != keys_to_delete.end();
+            }));
+            for (QTreeWidgetItem *item: selected) {
+                delete item;
+            }
+        }
+    };
+    if (keys_to_delete.size() > 1) {
+        std::string message = "Are you sure you want to delete " + std::to_string(keys_to_delete.size()) + " keys?";
+        QMessageBox question("Redis Viewer", QString::fromStdString(message), QMessageBox::Question, QMessageBox::Yes | QMessageBox::Default, QMessageBox::No | QMessageBox::Escape, QMessageBox::NoButton);
+        if (question.exec() == QMessageBox::Yes) {
+            task_queue->RunTask<long long int>([this, keys_to_delete](){
+                return redis->DEL(keys_to_delete);
+            }, done_callback);
         }
     }
-    // TODO: Confirm deleting key(s)
-    // TODO: Start a pipeline to delete all at once
-    for (const auto &key: keys_to_delete) {
-        // TODO: Send Redis DEL command and remove item from list
+    else {
+        std::string key = keys_to_delete[0];
+        task_queue->RunTask<long long int>([this, key](){
+            return redis->DEL(key);
+        }, done_callback);
     }
-    // TODO: Execute pipeline
 }
 
 void MainWindow::ToggleGrouping() {
