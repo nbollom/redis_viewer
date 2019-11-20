@@ -70,6 +70,7 @@ MainWindow::MainWindow() {
     left_panel_layout.setMargin(0);
     instance_select.hide(); // Hide until we know there is a need for
     filter_list.hide(); // Toolbar button shows it
+    connect(&filter_list, &QLineEdit::textChanged, this, &MainWindow::UpdateKeysList);
 
     // List Toolbar
     list_toolbar.addAction(QIcon(":/images/add.svg"), "Add", this, &MainWindow::AddKey);
@@ -87,7 +88,7 @@ MainWindow::MainWindow() {
     redis_keys_tree.setHeaderHidden(false);
     redis_keys_tree.setHeaderLabel("Key");
     redis_keys_tree.setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
-    redis_keys_tree.setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
+    redis_keys_tree.setSelectionMode(QAbstractItemView::SelectionMode::ExtendedSelection);
     connect(&redis_keys_tree, &QTreeWidget::itemActivated, this, &MainWindow::SelectKey);
 
     // Tabs Panel
@@ -151,17 +152,29 @@ void MainWindow::QuickConnect() {
 }
 
 void MainWindow::UpdateKeysList() {
+    // TODO: get a list of expanded branches so that they can be re-expanded if they exist in the new tree
     redis_keys_tree.clear();
     QIcon key_icon = QIcon(":/images/done.svg");
+    std::string filter = filter_list.text().toStdString();
+    std::vector<std::string> filtered_list;
+    if (!filter.empty()) {
+        std::copy_if(keys_list.begin(), keys_list.end(), std::back_inserter(filtered_list), [&filter](const std::string& val){
+            return val.find(filter) != std::string::npos;
+        });
+    }
+    else {
+        filtered_list = keys_list;
+    }
     if (group_keys) {
         struct Leaf {
             std::string label;
             std::vector<Leaf> children;
             std::string full_key;
+            bool expanded = false;
         };
         Leaf master = Leaf();
         char group_char = settings.GroupChar();
-        for (auto &key: keys_list) {
+        for (auto &key: filtered_list) {
             // TODO: Apply grouping logic
             int start_pos = 0;
             Leaf *current = &master;
@@ -200,6 +213,7 @@ void MainWindow::UpdateKeysList() {
                 if (child_items.count()) {
                     item->addChildren(child_items);
                 }
+                item->setExpanded(level.expanded);
                 children.append(item);
             }
             return children;
@@ -210,7 +224,7 @@ void MainWindow::UpdateKeysList() {
         }
     }
     else {
-        for (auto &key: keys_list) {
+        for (auto &key: filtered_list) {
             QString key_string = QString::fromStdString(key);
             auto *item = new QTreeWidgetItem(&redis_keys_tree, {key_string});
             item->setToolTip(0, key_string);
@@ -218,8 +232,6 @@ void MainWindow::UpdateKeysList() {
             redis_keys_tree.addTopLevelItem(item);
         }
     }
-    ShowStatusMessage("Done");
-    redis_keys_tree.setFocus();
 }
 
 bool MainWindow::HasOpenTab(const std::string &key, bool is_redis) {
@@ -303,6 +315,9 @@ void MainWindow::AddKey() {
 
 void MainWindow::DeleteKey() {
     QList<QTreeWidgetItem *> selected = redis_keys_tree.selectedItems();
+    if (selected.empty()) {
+        return;
+    }
     std::vector<std::string> keys_to_delete;
     std::function<void(const QTreeWidgetItem *)> get_keys_to_delete;
     get_keys_to_delete = [&keys_to_delete, &get_keys_to_delete] (const QTreeWidgetItem *item) {
@@ -325,13 +340,16 @@ void MainWindow::DeleteKey() {
         else {
             keys_list.erase(std::remove_if(keys_list.begin(), keys_list.end(), [&keys_to_delete, &selected](const std::string& val){
                 return std::find(keys_to_delete.begin(), keys_to_delete.end(), val) != keys_to_delete.end();
-            }));
+            }), keys_list.end());
             for (QTreeWidgetItem *item: selected) {
                 delete item;
             }
         }
     };
-    if (keys_to_delete.size() > 1) {
+    if (keys_to_delete.empty()) {
+        return;
+    }
+    else if (keys_to_delete.size() > 1) {
         std::string message = "Are you sure you want to delete " + std::to_string(keys_to_delete.size()) + " keys?";
         QMessageBox question("Redis Viewer", QString::fromStdString(message), QMessageBox::Question, QMessageBox::Yes | QMessageBox::Default, QMessageBox::No | QMessageBox::Escape, QMessageBox::NoButton);
         if (question.exec() == QMessageBox::Yes) {
@@ -354,11 +372,11 @@ void MainWindow::ToggleGrouping() {
 }
 
 void MainWindow::FilterList() {
-    bool filter = filter_list.isVisible();
-    filter_list.setVisible(!filter);
-    if (!filter) {
+    bool filter = !filter_list.isVisible();
+    filter_list.setVisible(filter);
+    if (!filter && !filter_list.text().isEmpty()) {
         filter_list.setText(""); // clear filter for next time
-        // TODO: Remove any current filter
+        UpdateKeysList();
     }
 }
 
@@ -367,9 +385,6 @@ void MainWindow::ReloadKeys() {
         ShowStatusMessage("Loading Keys from DB");
         // TODO: Show a spinner on the keys list
         std::string filter = "*";
-        if (filter_list.isVisible() && filter_list.text().length()) {
-            filter = filter_list.text().toStdString();
-        }
         task_queue->RunTask<std::vector<std::string>>([filter, this](){
             return this->redis->SCAN(filter, KeyTypeAny);
         }, [this](std::vector<std::string> &keys, const std::string &error){
@@ -381,6 +396,8 @@ void MainWindow::ReloadKeys() {
                 this->keys_list = keys;
                 std::sort(this->keys_list.begin(), this->keys_list.end());
                 UpdateKeysList();
+                ShowStatusMessage("Done");
+                redis_keys_tree.setFocus();
             }
             // TODO: Hide the spinner on the keys list
         });
