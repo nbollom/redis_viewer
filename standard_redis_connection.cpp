@@ -271,7 +271,37 @@ std::vector<std::string> StandardRedisConnection::HKEYS(const std::string &key) 
 }
 
 std::map<std::string, std::string> StandardRedisConnection::HSCAN(const std::string &key, const std::string &search_string) {
-    return {};
+    int cursor = 0;
+    std::map<std::string, std::string> values;
+    while(true) {
+        redisReply *reply = nullptr;
+        reply = static_cast<redisReply*>(redisCommand(this->context, "HSCAN %b %d MATCH %b", key.data(), key.size(), cursor, search_string.data(), search_string.size()));
+        if (!reply) {
+            Disconnect();
+            throw RedisDisconnectedException();
+        }
+        if (reply->elements == 2) {
+            redisReply *cursor_ptr = reply->element[0];
+            redisReply *data_ptr = reply->element[1];
+            std::string hash_key;
+            for (size_t i = 0; i < data_ptr->elements; ++i) {
+                redisReply *element_ptr = data_ptr->element[i];
+                if (hash_key.length()) {
+                    values[hash_key] = element_ptr->str;
+                    hash_key = "";
+                }
+                else {
+                    hash_key = element_ptr->str;
+                }
+            }
+            cursor = std::stoi(cursor_ptr->str);
+            if (cursor == 0) {
+                break;
+            }
+        }
+        freeReplyObject(reply);
+    }
+    return values;
 }
 
 std::string StandardRedisConnection::HGET(const std::string &key, const std::string &field) {

@@ -10,8 +10,7 @@
 #include <QtGui/QFontDatabase>
 #include <QtWidgets/QMessageBox>
 
-StringTabDocument::StringTabDocument(std::string key, RedisConnectionPtr connection) :
-            key_name(std::move(key)), redis(std::move(connection)) {
+StringTabDocument::StringTabDocument(std::string key, RedisConnectionPtr connection) : key_name(std::move(key)), redis(std::move(connection)) {
     has_changes = false;
     setLayout(&layout);
 

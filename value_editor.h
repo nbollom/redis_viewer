@@ -67,6 +67,7 @@ public:
     void SetValue(const std::string &value);
     std::string GetValue();
     void TextChanged();
+    bool HasChanges();
 
 signals:
     void value_changed();

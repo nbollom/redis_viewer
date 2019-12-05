@@ -9,6 +9,8 @@ set(REDIS_VIEWER_SOURCES
         controller.cpp
         controller.h
         gzip.h
+        hash_tab_document.cpp
+        hash_tab_document.h
         images.qrc
         json.h
         main.cpp

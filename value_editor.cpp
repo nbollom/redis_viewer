@@ -40,6 +40,7 @@ ValueEditor::ValueEditor() {
 }
 
 void ValueEditor::SetValue(const std::string &value) {
+    changed = false;
     decoded_value = value;
     // TODO: determine what type it is
 #ifdef ENABLE_BASE64
@@ -51,7 +52,7 @@ void ValueEditor::SetValue(const std::string &value) {
         is_bas64 = true;
     }
     catch (cppcodec::parse_error &error) {
-
+        std::cout << error.what() << std::endl;
     }
 #ifdef ENABLE_ZLIB
     // Secondly check if it zipped
@@ -88,8 +89,6 @@ void ValueEditor::SetValue(const std::string &value) {
 
         }
     }
-    QString string_value = QString::fromStdString(decoded_value);
-    editor.setPlainText(string_value);
 #ifdef ENABLE_BASE64
 #ifdef ENABLE_ZLIB
     if (is_bas64 && is_zipped) {
@@ -128,6 +127,8 @@ void ValueEditor::SetValue(const std::string &value) {
         original_type = EditorTypeString;
     }
     type_selector.setCurrentIndex(original_type);
+    QString string_value = QString::fromStdString(decoded_value);
+    editor.setPlainText(string_value);
 }
 
 std::string ValueEditor::GetValue() {
@@ -137,7 +138,10 @@ std::string ValueEditor::GetValue() {
 }
 
 void ValueEditor::TextChanged() {
-    if (editor.toPlainText().toStdString() == decoded_value && type_selector.currentIndex() == original_type) {
+    QString val = editor.toPlainText();
+    std::string editor_value = val.toStdString();
+    EditorType current_type = static_cast<EditorType>(type_selector.currentIndex());
+    if (editor_value == decoded_value && current_type == original_type) {
         if (changed) {
             changed = false;
             emit changes_undone();
@@ -149,4 +153,8 @@ void ValueEditor::TextChanged() {
             emit value_changed();
         }
     }
+}
+
+bool ValueEditor::HasChanges() {
+    return changed;
 }

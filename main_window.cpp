@@ -15,6 +15,7 @@
 #include "quick_connect_dialog.h"
 #include "redis_exceptions.h"
 #include "string_tab_document.h"
+#include "hash_tab_document.h"
 
 MainWindow::MainWindow() {
     // Load Settings
@@ -431,7 +432,7 @@ void MainWindow::SelectKey(QTreeWidgetItem *item, int column) {
                         break;
                     case KeyTypeHash:
                         ShowStatusMessage("Hash");
-                        return;
+                        doc = new HashTabDocument(key, redis);
                         break;
                     default:
                         throw std::runtime_error("Encountered unknown type");
